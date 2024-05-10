@@ -1,5 +1,6 @@
 package com.example.wifitracker.ui.wifi.ui
 
+import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -15,7 +16,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontFamily
 
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -23,7 +26,7 @@ import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.navigation.NavHostController
 import com.example.wifitracker.R
 import com.example.wifitracker.ui.theme.AppColor
-import com.example.wifitracker.ui.theme.kohSantepheapFamily
+
 import com.example.wifitracker.ui.wifi.data.Routes
 
 
@@ -71,13 +74,14 @@ fun BodyMain(navHost: NavHostController) {
                     top.linkTo(logo.bottom)
                     start.linkTo(parent.start)
                     end.linkTo(parent.end)
-                },navHost)
+                }, navHost
+        )
 
         ButtonSpeedTest(Modifier.constrainAs(buttonSpeedTest) {
             top.linkTo(buttonHunter.bottom)
             start.linkTo(parent.start)
             end.linkTo(parent.end)
-        },navHost)
+        }, navHost)
 
         CreatorApp("Create by Junaxer",
             Modifier
@@ -100,14 +104,19 @@ fun CreatorApp(creator: String, modifier: Modifier) {
         fontSize = 15.sp,
         color = AppColor.letter,
         modifier = modifier,
-        fontFamily = kohSantepheapFamily
+        fontFamily = FontFamily.Serif
     )
 }
 
 @Composable
 fun ButtonSpeedTest(modifier: Modifier, navHost: NavHostController) {
+    val contexto = LocalContext.current
     OutlinedButton(
-        onClick = {navHost.navigate(Routes.ScreenSpeedTest.route)},
+        onClick = {
+            Toast.makeText(contexto, "Aun no esta disponible esta opcion", Toast.LENGTH_LONG).show()
+            /*
+            * navHost.navigate(Routes.ScreenSpeedTest.route)*/
+        },
         modifier = modifier,
         shape = RectangleShape,
         colors = ButtonDefaults.buttonColors(AppColor.button),
@@ -115,8 +124,8 @@ fun ButtonSpeedTest(modifier: Modifier, navHost: NavHostController) {
     ) {
         Text(
             text = "WIFI SPEED TEST",
-            fontSize = 25.sp,
-            color = AppColor.letter, fontFamily = kohSantepheapFamily
+            fontSize = 20.sp,
+            color = AppColor.letter, fontFamily = FontFamily.Serif
         )
     }
 }
@@ -126,16 +135,16 @@ fun ButtonHunter(modifier: Modifier, navHost: NavHostController) {
 
 
     OutlinedButton(
-        onClick = {navHost.navigate(Routes.ScreenSeeker.route)},
-        modifier = modifier.width(245.dp),
+        onClick = { navHost.navigate(Routes.ScreenSeeker.route) },
+        modifier = modifier.width(200.dp),
         shape = RectangleShape,
         colors = ButtonDefaults.buttonColors(AppColor.button),
         border = BorderStroke(1.dp, Color.White)
     ) {
         Text(
             text = "WIFI HUNTER",
-            fontSize = 25.sp,
-            color = AppColor.letter, fontFamily = kohSantepheapFamily
+            fontSize = 20.sp,
+            color = AppColor.letter, fontFamily = FontFamily.Serif
 
 
         )
@@ -153,5 +162,11 @@ fun LogoApp(modifier: Modifier) {
 
 @Composable
 fun NameApp(title: String, modifier: Modifier) {
-    Text(text = title, fontSize = 25.sp, color = AppColor.letter, modifier = modifier)
+    Text(
+        text = title,
+        fontSize = 25.sp,
+        color = AppColor.letter,
+        modifier = modifier,
+        fontFamily = FontFamily.Serif
+    )
 }

@@ -1,8 +1,11 @@
 package com.example.wifitracker
 
+
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.annotation.RequiresApi
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -15,10 +18,12 @@ import com.example.wifitracker.ui.wifi.ui.ScreenSpeedTest
 
 
 class MainActivity : ComponentActivity() {
+    @RequiresApi(Build.VERSION_CODES.R)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             val navHost = rememberNavController()
+
             NavHost(navController = navHost, startDestination = Routes.ScreenMain.route) {
                 composable(Routes.ScreenMain.route) { ScreenMain(navHost) }
                 composable(Routes.ScreenSeeker.route) { ScreenSeeker(navHost) }

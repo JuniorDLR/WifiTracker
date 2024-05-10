@@ -39,4 +39,4 @@ val Typography = Typography(
 )
 
 
-val kohSantepheapFamily = FontFamily(Font(R.font.koh_santepheap))
+val koh_santepheap = FontFamily(Font(R.font.koh_santepheap))
