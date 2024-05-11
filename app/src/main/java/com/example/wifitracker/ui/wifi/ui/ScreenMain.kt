@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -136,7 +135,7 @@ fun ButtonHunter(modifier: Modifier, navHost: NavHostController) {
 
     OutlinedButton(
         onClick = { navHost.navigate(Routes.ScreenSeeker.route) },
-        modifier = modifier.width(200.dp),
+        modifier = modifier,
         shape = RectangleShape,
         colors = ButtonDefaults.buttonColors(AppColor.button),
         border = BorderStroke(1.dp, Color.White)

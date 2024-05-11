@@ -1,7 +1,9 @@
 package com.example.wifitracker.ui.wifi.ui
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -48,11 +50,21 @@ import androidx.navigation.NavHostController
 import com.example.wifitracker.ui.theme.AppColor
 import com.example.wifitracker.ui.wifi.data.Routes
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
-import androidx.compose.material.icons.filled.Lan
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
+import com.example.wifitracker.R
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.airbnb.lottie.compose.LottieAnimation
+import com.airbnb.lottie.compose.LottieCompositionSpec
+import com.airbnb.lottie.compose.LottieConstants
+import com.airbnb.lottie.compose.animateLottieCompositionAsState
+import com.airbnb.lottie.compose.rememberLottieComposition
 
 
 @Composable
@@ -195,35 +207,99 @@ fun ArrowBackIcon(modifier: Modifier, navHost: NavHostController) {
     )
 
     if (dialogState) {
-        AlertDialogWifi(navHost)
+        InfoDialog(onDismiss = { !dialogState }, navHost)
+
+
+    }
+}
+
+
+@Composable
+fun InfoDialog(
+    onDismiss: () -> Unit,
+    navHost: NavHostController
+) {
+    Dialog(
+        onDismissRequest = { onDismiss() },
+        properties = DialogProperties(
+            dismissOnBackPress = true,
+            dismissOnClickOutside = false
+        )
+    ) {
+        Box(
+            modifier = Modifier
+                .height(200.dp)
+        ) {
+            Column(
+                modifier = Modifier
+            ) {
+                Spacer(modifier = Modifier.height(35.dp))
+                Box(
+                    modifier = Modifier
+                        .height(80.dp)
+                        .background(
+                            color = AppColor.alertDialog,
+                            shape = RoundedCornerShape(10.dp) // Solo necesitas un solo valor para todos los bordes
+                        )
+                        .border(
+                            width = 1.dp,
+                            color = Color.Black,
+                            shape = RoundedCornerShape(10.dp) // Asegúrate de usar la misma forma que en el fondo
+                        )
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+
+                        ButtonDetail(navHost)
+                        Spacer(modifier = Modifier.size(5.dp))
+                        ButtonAttack(navHost)
+                    }
+                }
+            }
+            HeaderImage(
+                modifier = Modifier
+                    .size(50.dp)
+                    .align(Alignment.TopCenter)
+                    .border(1.dp, Color.Black, shape = CircleShape)
+            )
+
+        }
     }
 }
 
 @Composable
-fun AlertDialogWifi(navHost: NavHostController) {
+fun HeaderImage(modifier: Modifier) {
+    Image(
+        painter = painterResource(id = R.drawable.pirata),
+        contentDescription = "piarat",
+        modifier = modifier.clip(CircleShape)
 
-
-    AlertDialog(
-        onDismissRequest = {},
-        confirmButton = {
-            Button(onClick = { navHost.navigate(Routes.ScreenRouterDetails.route) }) {
-                Text(text = "Details")
-            }
-        },
-        title = { Text(text = "Titulo") },
-        properties = DialogProperties(dismissOnBackPress = true, dismissOnClickOutside = true),
-        icon = { Icon(imageVector = Icons.Filled.Lan, contentDescription = "lan") }, text = {
-            Text(
-                text = "Texto"
-            )
-        }, dismissButton = {
-            Button(onClick = { navHost.navigate(Routes.ScreenRouterAttack.route) }) {
-                Text(text = "Attack")
-            }
-        }
     )
+}
 
+@Composable
+fun ButtonDetail(navHost: NavHostController) {
+    OutlinedButton(
+        onClick = { navHost.navigate(Routes.ScreenRouterDetails.route) },
+        colors = ButtonDefaults.buttonColors(AppColor.buttonDetail),
 
+        ) {
+        Text(text = "DETAILS", fontSize = 18.sp, color = AppColor.letter)
+    }
+}
+
+@Composable
+fun ButtonAttack(navHost: NavHostController) {
+    OutlinedButton(
+        onClick = { navHost.navigate(Routes.ScreenRouterAttack.route) },
+        colors = ButtonDefaults.buttonColors(AppColor.buttonAttack),
+
+        ) {
+        Text(text = "ATTACK", fontSize = 18.sp, color = AppColor.letter)
+    }
 }
 
 @Composable
@@ -334,8 +410,21 @@ fun TextSwitch(scanningTitle: String) {
 
 @Composable
 fun LottieSeeker(modifier: Modifier) {
-
-    Box(modifier = modifier.height(100.dp)) {
-        Text(text = "¡AQUI UN LOTTIE ANIMADO!", fontSize = 25.sp, color = Color.White)
+    val composition by rememberLottieComposition(
+        spec = LottieCompositionSpec.RawRes(R.raw.radar)
+    )
+    val preloaderProgress by animateLottieCompositionAsState(
+        composition,
+        iterations = LottieConstants.IterateForever,
+        isPlaying = true
+    )
+    Box(modifier = modifier.height(150.dp)) {
+        LottieAnimation(
+            composition = composition,
+            progress = preloaderProgress,modifier=Modifier.size(200.dp)
+        )
     }
+
+
 }
+

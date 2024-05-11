@@ -17,4 +17,5 @@ object AppColor {
     val buttonAttack = Color(0xFFD42424)
     val buttonDetail = Color(0xFF38B82C)
     val IconStatus = Color(0XFF38B82C)
+    val alertDialog = Color(0XFFD9D9D9)
 }

@@ -82,4 +82,8 @@ dependencies {
     //Layout
     implementation ("androidx.constraintlayout:constraintlayout-compose:1.0.1")
 
+    //Lottie
+    implementation ("com.airbnb.android:lottie-compose:4.2.0")
+
+
 }
