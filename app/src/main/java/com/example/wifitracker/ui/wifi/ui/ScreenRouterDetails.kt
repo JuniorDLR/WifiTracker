@@ -30,11 +30,16 @@ import androidx.navigation.NavHostController
 import com.example.wifitracker.R
 import com.example.wifitracker.ui.theme.AppColor
 import com.example.wifitracker.ui.wifi.data.Routes
+import com.example.wifitracker.ui.wifi.viewmodel.WifiViewModel
 
 
 @RequiresApi(Build.VERSION_CODES.M)
 @Composable
-fun ScreenRouterDetails(navHost: NavHostController, ) {
+fun ScreenRouterDetails(
+    navHost: NavHostController,
+    argument: String,
+    wifiViewModel: WifiViewModel
+) {
 
     Column(
         Modifier
@@ -44,13 +49,13 @@ fun ScreenRouterDetails(navHost: NavHostController, ) {
 
         TopBarDetails(navHost)
         Divider(Modifier.fillMaxWidth(), color = Color.White)
-        BodyDetails()
+        BodyDetails(argument, wifiViewModel)
     }
 }
 
 
 @Composable
-fun BodyDetails() {
+fun BodyDetails(argument: String, wifiViewModel: WifiViewModel) {
     ConstraintLayout(
         Modifier
             .fillMaxSize()
@@ -58,7 +63,7 @@ fun BodyDetails() {
     ) {
         val (imageRouter, ssid, bssid, security, frequency, level, divider0, divider1, divider2, divider3, divider4, divider5) = createRefs()
 
-
+        val getObjectResult = wifiViewModel.returnSSID(argument)
 
         ImageRouter(
             Modifier
@@ -67,71 +72,79 @@ fun BodyDetails() {
                     end.linkTo(parent.end)
                 })
 
-        Divider(Modifier.constrainAs(divider0) {
-            top.linkTo(imageRouter.bottom)
-            start.linkTo(parent.start)
-            end.linkTo(parent.end)
-        })
-        InfoWifi("SSID:", "scanResult.SSID", Modifier.constrainAs(ssid) {
-            top.linkTo(divider0.bottom)
-            start.linkTo(parent.start)
-            end.linkTo(parent.end)
-        })
+        if (getObjectResult != null) {
+            Divider(Modifier.constrainAs(divider0) {
+                top.linkTo(imageRouter.bottom)
+                start.linkTo(parent.start)
+                end.linkTo(parent.end)
+            })
+            InfoWifi("Name:", getObjectResult.SSID, Modifier.constrainAs(ssid) {
+                top.linkTo(divider0.bottom)
+                start.linkTo(parent.start)
+                end.linkTo(parent.end)
+            })
 
-        Divider(Modifier.constrainAs(divider1) {
-            top.linkTo(ssid.bottom)
-            start.linkTo(parent.start)
-            end.linkTo(parent.end)
-        })
+            Divider(Modifier.constrainAs(divider1) {
+                top.linkTo(ssid.bottom)
+                start.linkTo(parent.start)
+                end.linkTo(parent.end)
+            })
 
-        InfoWifi("BSSID:", "scanResult.BSSID", Modifier.constrainAs(bssid) {
-            top.linkTo(divider1.bottom)
-            start.linkTo(parent.start)
-            end.linkTo(parent.end)
-        })
+            InfoWifi("MAC:", getObjectResult.BSSID, Modifier.constrainAs(bssid) {
+                top.linkTo(divider1.bottom)
+                start.linkTo(parent.start)
+                end.linkTo(parent.end)
+            })
 
-        Divider(Modifier.constrainAs(divider2) {
-            top.linkTo(bssid.bottom)
-            start.linkTo(parent.start)
-            end.linkTo(parent.end)
-        })
+            Divider(Modifier.constrainAs(divider2) {
+                top.linkTo(bssid.bottom)
+                start.linkTo(parent.start)
+                end.linkTo(parent.end)
+            })
 
-        InfoWifi("Seguridad: ", "scanResult.capabilities", Modifier.constrainAs(security) {
-            top.linkTo(divider2.bottom)
-            start.linkTo(parent.start)
-            end.linkTo(parent.end)
-        })
+            InfoWifi("Security: ", getObjectResult.capabilities, Modifier.constrainAs(security) {
+                top.linkTo(divider2.bottom)
+                start.linkTo(parent.start)
+                end.linkTo(parent.end)
+            })
 
-        Divider(Modifier.constrainAs(divider3) {
-            top.linkTo(security.bottom)
-            start.linkTo(parent.start)
-            end.linkTo(parent.end)
-        })
+            Divider(Modifier.constrainAs(divider3) {
+                top.linkTo(security.bottom)
+                start.linkTo(parent.start)
+                end.linkTo(parent.end)
+            })
 
-        InfoWifi("Frecuencia:", " scanResult.frequency MHz", Modifier.constrainAs(frequency) {
-            top.linkTo(divider3.bottom)
-            start.linkTo(parent.start)
-            end.linkTo(parent.end)
-        })
+            InfoWifi(
+                "Frequency:",
+                "${getObjectResult.frequency} MHz",
+                Modifier.constrainAs(frequency) {
+                    top.linkTo(divider3.bottom)
+                    start.linkTo(parent.start)
+                    end.linkTo(parent.end)
+                })
 
-        Divider(Modifier.constrainAs(divider4) {
-            top.linkTo(frequency.bottom)
-            start.linkTo(parent.start)
-            end.linkTo(parent.end)
-        })
+            Divider(Modifier.constrainAs(divider4) {
+                top.linkTo(frequency.bottom)
+                start.linkTo(parent.start)
+                end.linkTo(parent.end)
+            })
 
-        InfoWifi("Nivel de señal:", "scanResult.level dBm", Modifier.constrainAs(level) {
-            top.linkTo(divider4.bottom)
-            start.linkTo(parent.start)
-            end.linkTo(parent.end)
-        })
+            InfoWifi(
+                "Signal level:",
+                "${getObjectResult.level} dBm",
+                Modifier.constrainAs(level) {
+                    top.linkTo(divider4.bottom)
+                    start.linkTo(parent.start)
+                    end.linkTo(parent.end)
+                })
 
-        Divider(Modifier.constrainAs(divider5) {
-            top.linkTo(level.bottom)
-            start.linkTo(parent.start)
-            end.linkTo(parent.end)
-        })
+            Divider(Modifier.constrainAs(divider5) {
+                top.linkTo(level.bottom)
+                start.linkTo(parent.start)
+                end.linkTo(parent.end)
+            })
 
+        }
     }
 
 

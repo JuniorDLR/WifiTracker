@@ -1,5 +1,14 @@
 package com.example.wifitracker.ui.wifi.ui
 
+import android.content.Context
+import android.net.ConnectivityManager
+import android.net.Network
+import android.net.NetworkCapabilities
+import android.net.NetworkRequest
+import android.net.wifi.WifiNetworkSpecifier
+import android.os.Build
+import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -26,10 +35,17 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
@@ -39,9 +55,15 @@ import androidx.navigation.NavHostController
 import com.example.wifitracker.R
 import com.example.wifitracker.ui.theme.AppColor
 import com.example.wifitracker.ui.wifi.data.Routes
+import com.example.wifitracker.ui.wifi.viewmodel.WifiViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 
+
+@RequiresApi(Build.VERSION_CODES.Q)
 @Composable
-fun ScreenRouterAttack(navHost: NavHostController) {
+fun ScreenRouterAttack(navHost: NavHostController, argument: String, wifiViewModel: WifiViewModel) {
     Column(
         Modifier
             .fillMaxSize()
@@ -49,16 +71,20 @@ fun ScreenRouterAttack(navHost: NavHostController) {
     ) {
         TopBarAttack(navHost)
         Divider(Modifier.fillMaxWidth(), color = Color.White)
-        BodyAttack()
+        BodyAttack(argument, wifiViewModel)
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.Q)
 @Composable
-fun BodyAttack() {
+fun BodyAttack(ssid: String, wifiViewModel: WifiViewModel) {
+
+    val password: String? by wifiViewModel.password.observeAsState(initial = "")
+
     ConstraintLayout(Modifier.fillMaxSize()) {
         val (nameRouter, process, input, button) = createRefs()
 
-        NameRouterView("CLARO_OR34",
+        NameRouterView(ssid,
             Modifier
                 .padding(top = 20.dp)
                 .constrainAs(nameRouter) {
@@ -84,7 +110,8 @@ fun BodyAttack() {
                     top.linkTo(process.bottom)
                     start.linkTo(parent.start)
                     end.linkTo(parent.end)
-                })
+                }, ssid, wifiViewModel
+        )
 
         ButtoPassword(
             Modifier
@@ -93,14 +120,18 @@ fun BodyAttack() {
                     top.linkTo(input.bottom)
                     start.linkTo(parent.start)
                     end.linkTo(parent.end)
-                })
+                }, password
+        )
     }
 }
 
 @Composable
-fun ButtoPassword(modifier: Modifier) {
+fun ButtoPassword(modifier: Modifier, password: String?) {
+    val context = LocalContext.current
     OutlinedButton(
-        onClick = {},
+        onClick = {
+            Toast.makeText(context, "Contraseña copiada: $password", Toast.LENGTH_LONG).show()
+        },
         modifier = modifier,
         shape = RectangleShape,
         colors = ButtonDefaults.buttonColors(AppColor.button),
@@ -116,9 +147,17 @@ fun ButtoPassword(modifier: Modifier) {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.Q)
 @Composable
-fun InputView(modifier: Modifier) {
+fun InputView(modifier: Modifier, ssid: String, wifiViewModel: WifiViewModel) {
 
+    var delayState by remember {
+        mutableStateOf(false)
+    }
+
+    var claveWifi by remember {
+        mutableStateOf<String?>(null)
+    }
     Column(
         modifier = modifier
             .background(Color.Black)
@@ -132,19 +171,36 @@ fun InputView(modifier: Modifier) {
             color = Color.Green,
             modifier = Modifier.padding(2.dp)
         )
-        Text(
-            text = "Process[2] Cracking password",
-            fontSize = 18.sp,
-            color = Color.Green,
-            modifier = Modifier.padding(2.dp)
-        )
-        Text(
-            text = "Process[3] Password: Jundingo",
-            fontSize = 18.sp,
-            color = Color.Green,
-            modifier = Modifier.padding(2.dp)
-        )
 
+        val context = LocalContext.current
+        LaunchedEffect(Unit) {
+            delay(3000)
+            delayState = true
+
+            withContext(Dispatchers.IO) {
+                claveWifi = connectToWifi(ssid, listOf(""), context)
+            }
+        }
+        if (delayState) {
+            Text(
+                text = "Process[2] Cracking password",
+                fontSize = 18.sp,
+                color = Color.Green,
+                modifier = Modifier.padding(2.dp)
+            )
+
+
+            claveWifi?.let {
+                Text(
+                    text = "Process[3] Password: $it",
+                    fontSize = 18.sp,
+                    color = Color.Green,
+                    modifier = Modifier.padding(2.dp)
+
+                )
+                wifiViewModel.changedPassword(it)
+            }
+        }
     }
 }
 
@@ -214,4 +270,42 @@ fun NavigationAttack(navHost: NavHostController) {
         tint = AppColor.letter,
         modifier = Modifier.clickable { navHost.navigate(Routes.ScreenSeeker.route) }
     )
+}
+
+
+@RequiresApi(Build.VERSION_CODES.Q)
+fun connectToWifi(networkSSID: String, networkPassKeys: List<String>, context: Context): String? {
+
+    var foundPassword: String? = null
+
+    val connectivityManager =
+        context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+
+    for (password in networkPassKeys) {
+        val networkRequest =
+            NetworkRequest.Builder().addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
+                .removeCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                .addCapability(NetworkCapabilities.NET_CAPABILITY_TRUSTED).setNetworkSpecifier(
+                    WifiNetworkSpecifier.Builder().setSsid(networkSSID).setWpa2Passphrase(password)
+                        .build()
+                ).build()
+
+
+        val networkCallBck = object : ConnectivityManager.NetworkCallback() {
+            override fun onAvailable(network: Network) {
+                super.onAvailable(network)
+
+                foundPassword = password
+                connectivityManager.unregisterNetworkCallback(this)
+            }
+        }
+
+        connectivityManager.requestNetwork(networkRequest, networkCallBck)
+        Thread.sleep(3000)
+
+        if (foundPassword != null) {
+            break
+        }
+    }
+    return foundPassword
 }
