@@ -24,12 +24,18 @@ class WifiViewModel : ViewModel() {
     private val _switchScanner = MutableLiveData<Boolean>()
     val switchScanner: LiveData<Boolean> = _switchScanner
 
+    private val _isFoundPassword = MutableLiveData<Boolean>()
+    val isFoundPassword: LiveData<Boolean> = _isFoundPassword
+
 
     fun getNameWifi(ssid: String) {
         _ssid.postValue(ssid)
     }
 
 
+    fun foundPassword(isFound:Boolean){
+        _isFoundPassword.postValue(isFound)
+    }
     fun changedPassword(password: String?) {
         _password.postValue(password)
     }
@@ -47,7 +53,6 @@ class WifiViewModel : ViewModel() {
             if (_switchScanner.value == true) {
                 _wifiNetworks.value = emptyList()
             } else {
-                delay(3000)
                 _wifiNetworks.value = observer
             }
         }

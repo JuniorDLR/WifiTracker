@@ -1,5 +1,6 @@
 package com.example.wifitracker.ui.wifi.ui
 
+
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.Network
@@ -45,8 +46,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.platform.ClipboardManager
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -80,6 +85,7 @@ fun ScreenRouterAttack(navHost: NavHostController, argument: String, wifiViewMod
 fun BodyAttack(ssid: String, wifiViewModel: WifiViewModel) {
 
     val password: String? by wifiViewModel.password.observeAsState(initial = "")
+    val isFound: Boolean by wifiViewModel.isFoundPassword.observeAsState(initial = false)
 
     ConstraintLayout(Modifier.fillMaxSize()) {
         val (nameRouter, process, input, button) = createRefs()
@@ -99,7 +105,7 @@ fun BodyAttack(ssid: String, wifiViewModel: WifiViewModel) {
                     top.linkTo(nameRouter.bottom)
                     start.linkTo(parent.start)
                     end.linkTo(parent.end)
-                }
+                }, isFound
 
         )
 
@@ -110,7 +116,7 @@ fun BodyAttack(ssid: String, wifiViewModel: WifiViewModel) {
                     top.linkTo(process.bottom)
                     start.linkTo(parent.start)
                     end.linkTo(parent.end)
-                }, ssid, wifiViewModel
+                }, ssid, wifiViewModel, isFound
         )
 
         ButtoPassword(
@@ -123,33 +129,51 @@ fun BodyAttack(ssid: String, wifiViewModel: WifiViewModel) {
                 }, password
         )
     }
+
+
 }
+
 
 @Composable
 fun ButtoPassword(modifier: Modifier, password: String?) {
     val context = LocalContext.current
+
+
+    val clipBoardManaguer = LocalClipboardManager.current
+    val stateButton = ButtonState(password)
+
     OutlinedButton(
         onClick = {
-            Toast.makeText(context, "Contraseña copiada: $password", Toast.LENGTH_LONG).show()
+            copyTextClipBoard(password, clipBoardManaguer)
+            Toast.makeText(context, "Contraseña copiada", Toast.LENGTH_LONG).show()
         },
         modifier = modifier,
         shape = RectangleShape,
         colors = ButtonDefaults.buttonColors(AppColor.button),
-        border = BorderStroke(1.dp, Color.White)
+        border = BorderStroke(1.dp, Color.White), enabled = stateButton
     ) {
         Text(
             text = "COPY PASSWORD",
-            fontSize = 20.sp,
+            fontSize = 17.sp,
             color = AppColor.letter, fontFamily = FontFamily.Serif
 
 
         )
     }
+
+}
+
+
+@Composable
+fun ButtonState(password: String?): Boolean = password?.isEmpty() != true
+
+fun copyTextClipBoard(text: String?, clipBoardManaguer: ClipboardManager) {
+    text?.let { AnnotatedString(it) }?.let { clipBoardManaguer.setText(it) }
 }
 
 @RequiresApi(Build.VERSION_CODES.Q)
 @Composable
-fun InputView(modifier: Modifier, ssid: String, wifiViewModel: WifiViewModel) {
+fun InputView(modifier: Modifier, ssid: String, wifiViewModel: WifiViewModel, isFound: Boolean) {
 
     var delayState by remember {
         mutableStateOf(false)
@@ -165,12 +189,7 @@ fun InputView(modifier: Modifier, ssid: String, wifiViewModel: WifiViewModel) {
             .height(150.dp)
             .padding(10.dp)
     ) {
-        Text(
-            text = "Process[1] Starting attack",
-            fontSize = 18.sp,
-            color = Color.Green,
-            modifier = Modifier.padding(2.dp)
-        )
+        TextoInput("1", "Starting attack")
 
         val context = LocalContext.current
         LaunchedEffect(Unit) {
@@ -178,60 +197,74 @@ fun InputView(modifier: Modifier, ssid: String, wifiViewModel: WifiViewModel) {
             delayState = true
 
             withContext(Dispatchers.IO) {
-                claveWifi = connectToWifi(ssid, listOf(""), context)
+                claveWifi = connectToWifi(
+                    ssid,
+                    listOf("junior123", "claudio", "Junior12345", "clau1983"),
+                    context, wifiViewModel
+                )
             }
         }
         if (delayState) {
-            Text(
-                text = "Process[2] Cracking password",
-                fontSize = 18.sp,
-                color = Color.Green,
-                modifier = Modifier.padding(2.dp)
-            )
+            TextoInput("2", "Cracking password")
 
 
             claveWifi?.let {
-                Text(
-                    text = "Process[3] Password: $it",
-                    fontSize = 18.sp,
-                    color = Color.Green,
-                    modifier = Modifier.padding(2.dp)
 
-                )
+                TextoInput("3", "Password: $it")
                 wifiViewModel.changedPassword(it)
             }
+        }
+
+        if (isFound) {
+            TextoInput("Fail", "Password not found")
         }
     }
 }
 
+@Composable
+fun TextoInput(proceso: String, mensaje: String) {
+    Text(
+        text = "Process [$proceso] $mensaje",
+        fontSize = 18.sp,
+        color = Color.Green,
+        modifier = Modifier.padding(2.dp)
+    )
+}
 
 @Composable
-fun ProcessView(modifier: Modifier) {
-
+fun ProcessView(modifier: Modifier, isFound: Boolean) {
     Row(
         modifier = modifier,
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Image(
-            painter = painterResource(id = R.drawable.hacker),
-            contentDescription = "hacker",
-            modifier = Modifier
-                .weight(1f)
-                .height(140.dp)
-        )
-        LinearProgressIndicator(
-            modifier = Modifier.weight(1f),
-            color = Color.White,
-            trackColor = AppColor.background
-        )
-        Image(
-            painter = painterResource(id = R.drawable.router_process),
-            contentDescription = "router",
-            modifier = Modifier
-                .weight(1f)
-                .height(180.dp)
-        )
+        if (isFound) {
+            Text(
+                text = "¡Proceso completado!",
+                style = TextStyle(color = Color.White, fontSize = 25.sp),
+                modifier = Modifier.fillMaxWidth()
+            )
+        } else {
+            Image(
+                painter = painterResource(id = R.drawable.hacker),
+                contentDescription = "hacker",
+                modifier = Modifier
+                    .weight(1f)
+                    .height(140.dp)
+            )
+            LinearProgressIndicator(
+                modifier = Modifier.weight(1f),
+                color = Color.White,
+                trackColor = AppColor.background
+            )
+            Image(
+                painter = painterResource(id = R.drawable.router_process),
+                contentDescription = "router",
+                modifier = Modifier
+                    .weight(1f)
+                    .height(180.dp)
+            )
+        }
     }
 }
 
@@ -274,7 +307,12 @@ fun NavigationAttack(navHost: NavHostController) {
 
 
 @RequiresApi(Build.VERSION_CODES.Q)
-fun connectToWifi(networkSSID: String, networkPassKeys: List<String>, context: Context): String? {
+fun connectToWifi(
+    networkSSID: String,
+    networkPassKeys: List<String>,
+    context: Context,
+    wifiViewModel: WifiViewModel
+): String? {
 
     var foundPassword: String? = null
 
@@ -296,16 +334,22 @@ fun connectToWifi(networkSSID: String, networkPassKeys: List<String>, context: C
                 super.onAvailable(network)
 
                 foundPassword = password
-                connectivityManager.unregisterNetworkCallback(this)
+                foundPassword?.let {
+                    connectivityManager.bindProcessToNetwork(network)
+                    connectivityManager.unregisterNetworkCallback(this)
+                }
+
             }
         }
 
         connectivityManager.requestNetwork(networkRequest, networkCallBck)
         Thread.sleep(3000)
-
         if (foundPassword != null) {
             break
+        } else {
+            wifiViewModel.foundPassword(true)
         }
+
     }
     return foundPassword
 }

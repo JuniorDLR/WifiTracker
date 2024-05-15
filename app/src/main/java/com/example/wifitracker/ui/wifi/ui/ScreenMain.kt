@@ -18,14 +18,12 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
-
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.navigation.NavHostController
 import com.example.wifitracker.R
 import com.example.wifitracker.ui.theme.AppColor
-
 import com.example.wifitracker.ui.wifi.data.Routes
 
 

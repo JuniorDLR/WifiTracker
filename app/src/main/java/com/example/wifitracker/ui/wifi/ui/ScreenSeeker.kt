@@ -27,7 +27,6 @@ import androidx.compose.material.icons.filled.Circle
 import androidx.compose.material.icons.filled.WifiPassword
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -73,7 +72,6 @@ import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
-
 import com.example.wifitracker.ui.wifi.viewmodel.WifiViewModel
 import android.Manifest
 import android.app.Activity
@@ -81,9 +79,7 @@ import android.content.pm.PackageManager
 
 @Composable
 fun ScreenSeeker(
-    navHost: NavHostController,
-    wifiViewModel: WifiViewModel,
-    wifiManaguer: WifiManager
+    navHost: NavHostController, wifiViewModel: WifiViewModel, wifiManaguer: WifiManager
 ) {
 
     Column(
@@ -102,35 +98,29 @@ fun ScreenSeeker(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TopBarSeeker(navHost: NavHostController) {
-    TopAppBar(
-        title = { Text(text = "Net-Seeker", fontSize = 25.sp, color = AppColor.letter) },
+    TopAppBar(title = { Text(text = "Net-Seeker", fontSize = 25.sp, color = AppColor.letter) },
         colors = TopAppBarDefaults.smallTopAppBarColors(AppColor.background),
-        navigationIcon = { NavigationSeeker(navHost) }
-    )
+        navigationIcon = { NavigationSeeker(navHost) })
 }
 
 @Composable
 fun NavigationSeeker(navHost: NavHostController) {
-    Icon(
-        imageVector = Icons.Filled.ArrowBackIosNew,
+    Icon(imageVector = Icons.Filled.ArrowBackIosNew,
         contentDescription = "Regresar",
         tint = AppColor.letter,
-        modifier = Modifier.clickable { navHost.navigate(Routes.ScreenMain.route) }
-    )
+        modifier = Modifier.clickable { navHost.navigate(Routes.ScreenMain.route) })
 }
 
 @Composable
 fun BodySeeker(
-    navHost: NavHostController,
-    wifiViewModel: WifiViewModel,
-    wifiManaguer: WifiManager
+    navHost: NavHostController, wifiViewModel: WifiViewModel, wifiManaguer: WifiManager
 ) {
 
     val scannerState: Boolean by wifiViewModel.switchScanner.observeAsState(initial = false)
     val wifiNetwork: List<ScanResult> by wifiViewModel.wifiNetwork.collectAsState(initial = emptyList())
     val ssid: String by wifiViewModel.ssid.observeAsState(initial = "")
 
-    ConstraintLayout(Modifier.fillMaxSize()) {
+    ConstraintLayout(Modifier.fillMaxWidth()) {
         val (lottie, switchScanning, network, rvNetwork) = createRefs()
         LottieSeeker(
             Modifier
@@ -138,6 +128,7 @@ fun BodySeeker(
                 .constrainAs(lottie) {
                     start.linkTo(parent.start)
                     end.linkTo(parent.end)
+                    top.linkTo(parent.top)
 
                 }, scannerState
         )
@@ -156,18 +147,21 @@ fun BodySeeker(
             Modifier
                 .padding(start = 22.dp)
                 .constrainAs(network) {
-                    start.linkTo(parent.start)
                     top.linkTo(switchScanning.bottom)
-                }, scannerState
+                    start.linkTo(parent.start)
+
+
+                }
         )
 
         RecyclerNetworks(
             Modifier
                 .padding(10.dp)
                 .constrainAs(rvNetwork) {
+                    top.linkTo(network.bottom)
                     start.linkTo(parent.start)
                     end.linkTo(parent.end)
-                    top.linkTo(network.bottom)
+
                 }, navHost, wifiNetwork, ssid, wifiViewModel
         )
 
@@ -187,12 +181,10 @@ fun RecyclerNetworks(
 
     val rvState = rememberLazyListState()
     LazyColumn(
-        modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center, state = rvState
+        modifier = modifier, state = rvState, verticalArrangement = Arrangement.spacedBy(5.dp)
     ) {
         items(wifiNetwork) { wifiModel ->
-            itemWifi(navHost, wifiModel, ssid, wifiViewModel)
+            itemWifi(navHost, ssid, wifiViewModel, wifiModel)
         }
 
     }
@@ -202,9 +194,8 @@ fun RecyclerNetworks(
 @Composable
 fun itemWifi(
     navHost: NavHostController,
-    wifiModel: ScanResult,
-    ssid: String,
-    wifiViewModel: WifiViewModel
+
+    ssid: String, wifiViewModel: WifiViewModel, wifiModel: ScanResult
 ) {
     Card(
         Modifier
@@ -238,21 +229,21 @@ fun ArrowBackIcon(
     ssid: String,
     wifiViewModel: WifiViewModel,
     wifiModel: ScanResult
+
 ) {
 
     var dialogState by remember {
         mutableStateOf(false)
     }
-    Icon(
-        imageVector = Icons.Filled.ChevronRight,
+    Icon(imageVector = Icons.Filled.ChevronRight,
         contentDescription = "Details",
-        tint = Color.White, modifier = modifier
+        tint = Color.White,
+        modifier = modifier
             .size(35.dp)
             .clickable {
                 dialogState = true
                 wifiViewModel.getNameWifi(wifiModel.SSID)
-            }
-    )
+            })
 
     if (dialogState) {
         InfoDialog(onDismiss = { !dialogState }, navHost, ssid)
@@ -264,20 +255,16 @@ fun ArrowBackIcon(
 
 @Composable
 fun InfoDialog(
-    onDismiss: () -> Unit,
-    navHost: NavHostController,
-    ssid: String
+    onDismiss: () -> Unit, navHost: NavHostController, ssid: String
 ) {
+
     Dialog(
-        onDismissRequest = { onDismiss() },
-        properties = DialogProperties(
-            dismissOnBackPress = true,
-            dismissOnClickOutside = false
+        onDismissRequest = { onDismiss() }, properties = DialogProperties(
+            dismissOnBackPress = true, dismissOnClickOutside = true
         )
     ) {
         Box(
-            modifier = Modifier
-                .height(200.dp)
+            modifier = Modifier.height(200.dp)
         ) {
             Column(
                 modifier = Modifier
@@ -287,13 +274,10 @@ fun InfoDialog(
                     modifier = Modifier
                         .height(80.dp)
                         .background(
-                            color = AppColor.alertDialog,
-                            shape = RoundedCornerShape(10.dp)
+                            color = AppColor.alertDialog, shape = RoundedCornerShape(10.dp)
                         )
                         .border(
-                            width = 1.dp,
-                            color = Color.Black,
-                            shape = RoundedCornerShape(10.dp)
+                            width = 1.dp, color = Color.Black, shape = RoundedCornerShape(10.dp)
                         )
                 ) {
                     Row(
@@ -367,7 +351,8 @@ fun IconGreenWifi(modifier: Modifier) {
     Icon(
         imageVector = Icons.Filled.Circle,
         contentDescription = "IconWifi",
-        tint = AppColor.IconStatus, modifier = modifier
+        tint = AppColor.IconStatus,
+        modifier = modifier
             .height(25.dp)
             .padding(top = 8.dp)
 
@@ -381,16 +366,15 @@ fun IconWifi(modifier: Modifier) {
         contentDescription = "Wifi",
         modifier = modifier
             .size(27.dp)
-            .padding(top = 3.dp), tint = Color.White
+            .padding(top = 3.dp),
+        tint = Color.White
     )
 }
 
 @Composable
-fun NetworkView(modifier: Modifier, scannerState: Boolean) {
-    Row(
+fun NetworkView(modifier: Modifier) {
+    Box(
         modifier = modifier,
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
             text = "Networks",
@@ -398,15 +382,7 @@ fun NetworkView(modifier: Modifier, scannerState: Boolean) {
             color = AppColor.letter,
             modifier = Modifier.padding(end = 5.dp)
         )
-        if (scannerState) {
-            CircularProgressIndicator(
-                color = Color(0XFF38B82C),
-                strokeWidth = 2.dp,
-                modifier = Modifier
-                    .size(20.dp)
 
-            )
-        }
     }
 
 }
@@ -425,8 +401,7 @@ fun SwitchScanning(
             .width(215.dp),
         elevation = CardDefaults.elevatedCardElevation(5.dp),
         border = BorderStroke(
-            2.dp,
-            Color.Gray
+            2.dp, Color.Gray
         ),
         colors = CardDefaults.cardColors(Color.White),
         shape = MaterialTheme.shapes.small
@@ -452,12 +427,10 @@ fun SwitchSeeker(
 ) {
     val contexto = LocalContext.current
     Switch(
-        checked = scannerState,
-        onCheckedChange = {
+        checked = scannerState, onCheckedChange = {
             onValueChanged(!scannerState)
             wifiViewModel.changeScan(wifiManaguer.scanResults)
-        },
-        colors = SwitchDefaults.colors(
+        }, colors = SwitchDefaults.colors(
             uncheckedThumbColor = Color.White,
             uncheckedBorderColor = Color.Gray,
             checkedThumbColor = Color.White,
@@ -468,14 +441,11 @@ fun SwitchSeeker(
     LaunchedEffect(Unit) {
         wifiManaguer.startScan()
         if (ActivityCompat.checkSelfPermission(
-                contexto,
-                Manifest.permission.ACCESS_FINE_LOCATION
+                contexto, Manifest.permission.ACCESS_FINE_LOCATION
             ) != PackageManager.PERMISSION_GRANTED
         ) {
             ActivityCompat.requestPermissions(
-                contexto as Activity,
-                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
-                1
+                contexto as Activity, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), 1
             )
             return@LaunchedEffect
         }
@@ -495,22 +465,22 @@ fun TextSwitch(scanningTitle: String) {
 @Composable
 fun LottieSeeker(modifier: Modifier, scannerState: Boolean) {
 
-    //    composition carga la descripción de la animación desde el archivo JSON.
+    // composition carga la descripción de la animación desde el archivo JSON.
+    val composition by rememberLottieComposition(spec = LottieCompositionSpec.RawRes(R.raw.radar))
 
-    val composition by rememberLottieComposition(
-        spec = LottieCompositionSpec.RawRes(R.raw.radar)
-    )
-
-    //    preloaderProgress controla cómo se reproduce la animación (es decir, si se está reproduciendo, su progreso, etc.).
+    // preloaderProgress controla cómo se reproduce la animación (es decir, si se está reproduciendo, su progreso, etc.).
     val preloaderProgress by animateLottieCompositionAsState(
         composition,
         iterations = LottieConstants.IterateForever,
-        isPlaying = scannerState
+        isPlaying = scannerState,
+        restartOnPlay = !scannerState
+
     )
     Box(modifier = modifier.height(150.dp)) {
         LottieAnimation(
             composition = composition,
-            progress = preloaderProgress, modifier = Modifier.size(200.dp)
+            progress = if (scannerState) preloaderProgress else 0.0f,
+            modifier = Modifier.size(200.dp)
         )
     }
 
