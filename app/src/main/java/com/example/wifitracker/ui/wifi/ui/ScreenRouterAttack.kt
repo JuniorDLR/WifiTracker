@@ -208,15 +208,15 @@ fun InputView(modifier: Modifier, ssid: String, wifiViewModel: WifiViewModel, is
             TextoInput("2", "Cracking password")
 
 
+        }
+
+        if (isFound) {
             claveWifi?.let {
 
                 TextoInput("3", "Password: $it")
                 wifiViewModel.changedPassword(it)
             }
-        }
 
-        if (isFound) {
-            TextoInput("Fail", "Password not found")
         }
     }
 }
@@ -242,7 +242,7 @@ fun ProcessView(modifier: Modifier, isFound: Boolean) {
             Text(
                 text = "¡Proceso completado!",
                 style = TextStyle(color = Color.White, fontSize = 25.sp),
-                modifier = Modifier.fillMaxWidth()
+
             )
         } else {
             Image(
@@ -304,9 +304,8 @@ fun NavigationAttack(navHost: NavHostController) {
         modifier = Modifier.clickable { navHost.navigate(Routes.ScreenSeeker.route) }
     )
 }
-
-
 @RequiresApi(Build.VERSION_CODES.Q)
+
 fun connectToWifi(
     networkSSID: String,
     networkPassKeys: List<String>,
@@ -345,9 +344,9 @@ fun connectToWifi(
         connectivityManager.requestNetwork(networkRequest, networkCallBck)
         Thread.sleep(3000)
         if (foundPassword != null) {
-            break
-        } else {
             wifiViewModel.foundPassword(true)
+            break
+
         }
 
     }
