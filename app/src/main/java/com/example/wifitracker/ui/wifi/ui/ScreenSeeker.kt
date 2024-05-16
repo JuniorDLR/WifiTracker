@@ -75,6 +75,10 @@ import com.example.wifitracker.ui.wifi.viewmodel.WifiViewModel
 import android.Manifest
 import android.app.Activity
 import android.content.pm.PackageManager
+import android.util.Log
+import androidx.activity.OnBackPressedCallback
+import androidx.activity.compose.BackHandler
+import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 
 @Composable
 fun ScreenSeeker(
@@ -122,56 +126,55 @@ fun BodySeeker(
 
 
 
-       ConstraintLayout(Modifier.fillMaxWidth()) {
-           val (lottie, switchScanning, network, rvNetwork) = createRefs()
+    ConstraintLayout(Modifier.fillMaxWidth()) {
+        val (lottie, switchScanning, network, rvNetwork) = createRefs()
 
-           LottieSeeker(
-               Modifier
-                   .constrainAs(lottie) {
-                       start.linkTo(parent.start)
-                       end.linkTo(parent.end)
-                       top.linkTo(parent.top)
+        LottieSeeker(
+            Modifier
+                .constrainAs(lottie) {
+                    start.linkTo(parent.start)
+                    end.linkTo(parent.end)
+                    top.linkTo(parent.top)
 
-                   }, scannerState
-           )
-
-
-           SwitchScanning(
-               Modifier
-                   .constrainAs(switchScanning) {
-                       top.linkTo(lottie.bottom)
-                       start.linkTo(parent.start)
-                       end.linkTo(parent.end)
-                   }, scannerState, wifiManaguer, wifiViewModel
-           ) { wifiViewModel.changedSwitchState(it) }
-
-           if (scannerState) {
-               NetworkView(
-                   Modifier
-                       .padding(start = 22.dp)
-                       .constrainAs(network) {
-                           top.linkTo(switchScanning.bottom)
-                           start.linkTo(parent.start)
+                }, scannerState
+        )
 
 
-                       }
-               )
-           }
+        SwitchScanning(
+            Modifier
+                .constrainAs(switchScanning) {
+                    top.linkTo(lottie.bottom)
+                    start.linkTo(parent.start)
+                    end.linkTo(parent.end)
+                }, scannerState, wifiManaguer, wifiViewModel
+        ) { wifiViewModel.changedSwitchState(it) }
 
-           RecyclerNetworks(
-               Modifier
-                   .padding(10.dp)
-                   .constrainAs(rvNetwork) {
-                       top.linkTo(network.bottom)
-                       start.linkTo(parent.start)
-                       end.linkTo(parent.end)
-
-                   }, navHost, wifiNetwork, ssid, wifiViewModel, frequency
-           )
+        if (scannerState) {
+            NetworkView(
+                Modifier
+                    .padding(start = 22.dp)
+                    .constrainAs(network) {
+                        top.linkTo(switchScanning.bottom)
+                        start.linkTo(parent.start)
 
 
-       }
+                    }
+            )
+        }
 
+        RecyclerNetworks(
+            Modifier
+                .padding(10.dp)
+                .constrainAs(rvNetwork) {
+                    top.linkTo(network.bottom)
+                    start.linkTo(parent.start)
+                    end.linkTo(parent.end)
+
+                }, navHost, wifiNetwork, ssid, wifiViewModel, frequency
+        )
+
+
+    }
 
 
 }
@@ -219,7 +222,7 @@ fun itemWifi(
             horizontalArrangement = Arrangement.Center
         ) {
             IconWifi(
-                Modifier.weight(1f), frequency,wifiModel
+                Modifier.weight(1f), frequency, wifiModel
             )
             IconGreenWifi(
                 Modifier.weight(0.5f)
@@ -241,14 +244,15 @@ fun ArrowBackIcon(
     navHost: NavHostController,
     ssid: String,
     wifiViewModel: WifiViewModel,
-    wifiModel: ScanResult
+    wifiModel: ScanResult,
 
 ) {
 
     var dialogState by remember {
         mutableStateOf(false)
     }
-    Icon(imageVector = Icons.Filled.ChevronRight,
+    Icon(
+        imageVector = Icons.Filled.ChevronRight,
         contentDescription = "Details",
         tint = Color.White,
         modifier = modifier
@@ -259,23 +263,28 @@ fun ArrowBackIcon(
             })
 
     if (dialogState) {
-        InfoDialog(onDismiss = { !dialogState }, navHost, ssid)
-
-
+        InfoDialog(
+            onDismiss = { dialogState = false },
+            navHost = navHost,
+            ssid = ssid,
+        )
     }
 }
 
-
 @Composable
 fun InfoDialog(
-    onDismiss: () -> Unit, navHost: NavHostController, ssid: String
+    onDismiss: () -> Unit,
+    navHost: NavHostController,
+    ssid: String,
 ) {
 
     Dialog(
-        onDismissRequest = { onDismiss() }, properties = DialogProperties(
-            dismissOnBackPress = true, dismissOnClickOutside = true
+        onDismissRequest = { onDismiss() },
+        properties = DialogProperties(
+            dismissOnBackPress = false
         )
     ) {
+        BackHandler(onBack = onDismiss)
         Box(
             modifier = Modifier.height(200.dp)
         ) {
@@ -298,7 +307,6 @@ fun InfoDialog(
                         horizontalArrangement = Arrangement.Center,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-
                         ButtonDetail(navHost, ssid)
                         Spacer(modifier = Modifier.size(5.dp))
                         ButtonAttack(navHost, ssid)
@@ -311,7 +319,6 @@ fun InfoDialog(
                     .align(Alignment.TopCenter)
                     .border(1.dp, Color.Black, shape = CircleShape)
             )
-
         }
     }
 }
@@ -380,27 +387,32 @@ fun IconWifi(modifier: Modifier, frequency: Double?, wifiModel: ScanResult) {
                 if (wifiModel.capabilities.contains("WEP") ||
                     wifiModel.capabilities.contains("WPA") ||
                     wifiModel.capabilities.contains("PSK") ||
-                    wifiModel.capabilities.contains("EAP")) {
+                    wifiModel.capabilities.contains("EAP")
+                ) {
                     R.drawable.freqalta
                 } else {
                     R.drawable.altaunlock
                 }
             }
+
             in 50.0..99.99 -> {
                 if (wifiModel.capabilities.contains("WEP") ||
                     wifiModel.capabilities.contains("WPA") ||
                     wifiModel.capabilities.contains("PSK") ||
-                    wifiModel.capabilities.contains("EAP")) {
+                    wifiModel.capabilities.contains("EAP")
+                ) {
                     R.drawable.freqmedia
                 } else {
                     R.drawable.mediaunlock
                 }
             }
+
             else -> {
                 if (wifiModel.capabilities.contains("WEP") ||
                     wifiModel.capabilities.contains("WPA") ||
                     wifiModel.capabilities.contains("PSK") ||
-                    wifiModel.capabilities.contains("EAP")) {
+                    wifiModel.capabilities.contains("EAP")
+                ) {
                     R.drawable.freqbaja
                 } else {
                     R.drawable.bajaunlock
@@ -521,22 +533,18 @@ fun LottieSeeker(modifier: Modifier, scannerState: Boolean) {
     // composition carga la descripción de la animación desde el archivo JSON.
     val composition by rememberLottieComposition(spec = LottieCompositionSpec.RawRes(R.raw.wifi_loading))
     val speed = sppedLottie(scannerState)
+
+
     // preloaderProgress controla cómo se reproduce la animación (es decir, si se está reproduciendo, su progreso, etc.).
     val preloaderProgress by animateLottieCompositionAsState(
         composition,
         iterations = LottieConstants.IterateForever,
         isPlaying = true, speed = speed
-
-
     )
-
-        LottieAnimation(
-            composition = composition,
-            progress =  preloaderProgress ,
-            modifier = modifier.size(230.dp)
-        )
-
-
-
+    LottieAnimation(
+        composition = composition,
+        progress = preloaderProgress,
+        modifier = modifier.size(230.dp)
+    )
 }
 
