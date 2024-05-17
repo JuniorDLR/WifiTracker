@@ -1,7 +1,6 @@
 package com.example.wifitracker.ui.wifi.ui
 
 import android.net.wifi.ScanResult
-import android.net.wifi.WifiManager
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -17,7 +16,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
@@ -45,12 +43,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.navigation.NavHostController
 import com.example.wifitracker.ui.theme.AppColor
 import com.example.wifitracker.ui.wifi.data.Routes
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
@@ -75,16 +71,15 @@ import com.example.wifitracker.ui.wifi.viewmodel.WifiViewModel
 import android.Manifest
 import android.app.Activity
 import android.content.pm.PackageManager
-import android.util.Log
-import androidx.activity.OnBackPressedCallback
+import android.net.wifi.WifiManager
 import androidx.activity.compose.BackHandler
-import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
+import androidx.compose.foundation.lazy.items
+
 
 @Composable
 fun ScreenSeeker(
     navHost: NavHostController, wifiViewModel: WifiViewModel, wifiManaguer: WifiManager
 ) {
-
     Column(
         Modifier
             .fillMaxSize()
@@ -93,9 +88,59 @@ fun ScreenSeeker(
         TopBarSeeker(navHost)
         Divider(Modifier.fillMaxWidth(), color = Color.White)
         BodySeeker(navHost, wifiViewModel, wifiManaguer)
-
     }
+}
 
+
+@Composable
+fun BodySeeker(
+    navHost: NavHostController, wifiViewModel: WifiViewModel, wifiManaguer: WifiManager
+) {
+    val scannerState: Boolean by wifiViewModel.switchScanner.observeAsState(initial = false)
+    val wifiNetwork: List<ScanResult> by wifiViewModel.wifiNetwork.collectAsState(initial = emptyList())
+    val ssid: String by wifiViewModel.ssid.observeAsState(initial = "")
+    val frequency: Double? by wifiViewModel.frequency.collectAsState(initial = null)
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.TopCenter),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            LottieSeeker(scannerState)
+
+            SwitchScanning(
+                scannerState,
+                wifiManaguer,
+                wifiViewModel
+            ) { wifiViewModel.changedSwitchState(it) }
+
+            if (scannerState) {
+                Spacer(modifier = Modifier.height(16.dp))
+
+                NetworkView(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .align(Alignment.Start)
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                RecyclerNetworks(
+                    navHost,
+                    wifiNetwork,
+                    ssid,
+                    wifiViewModel,
+                    frequency
+                )
+            }
+        }
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -115,73 +160,7 @@ fun NavigationSeeker(navHost: NavHostController) {
 }
 
 @Composable
-fun BodySeeker(
-    navHost: NavHostController, wifiViewModel: WifiViewModel, wifiManaguer: WifiManager
-) {
-
-    val scannerState: Boolean by wifiViewModel.switchScanner.observeAsState(initial = false)
-    val wifiNetwork: List<ScanResult> by wifiViewModel.wifiNetwork.collectAsState(initial = emptyList())
-    val ssid: String by wifiViewModel.ssid.observeAsState(initial = "")
-    val frequency: Double? by wifiViewModel.frequency.collectAsState(initial = null)
-
-
-
-    ConstraintLayout(Modifier.fillMaxWidth()) {
-        val (lottie, switchScanning, network, rvNetwork) = createRefs()
-
-        LottieSeeker(
-            Modifier
-                .constrainAs(lottie) {
-                    start.linkTo(parent.start)
-                    end.linkTo(parent.end)
-                    top.linkTo(parent.top)
-
-                }, scannerState
-        )
-
-
-        SwitchScanning(
-            Modifier
-                .constrainAs(switchScanning) {
-                    top.linkTo(lottie.bottom)
-                    start.linkTo(parent.start)
-                    end.linkTo(parent.end)
-                }, scannerState, wifiManaguer, wifiViewModel
-        ) { wifiViewModel.changedSwitchState(it) }
-
-        if (scannerState) {
-            NetworkView(
-                Modifier
-                    .padding(start = 22.dp)
-                    .constrainAs(network) {
-                        top.linkTo(switchScanning.bottom)
-                        start.linkTo(parent.start)
-
-
-                    }
-            )
-        }
-
-        RecyclerNetworks(
-            Modifier
-                .padding(10.dp)
-                .constrainAs(rvNetwork) {
-                    top.linkTo(network.bottom)
-                    start.linkTo(parent.start)
-                    end.linkTo(parent.end)
-
-                }, navHost, wifiNetwork, ssid, wifiViewModel, frequency
-        )
-
-
-    }
-
-
-}
-
-@Composable
 fun RecyclerNetworks(
-    modifier: Modifier,
     navHost: NavHostController,
     wifiNetwork: List<ScanResult>,
     ssid: String,
@@ -190,15 +169,19 @@ fun RecyclerNetworks(
 ) {
 
     val rvState = rememberLazyListState()
+
     LazyColumn(
-        modifier = modifier, state = rvState, verticalArrangement = Arrangement.spacedBy(5.dp)
+        state = rvState,
+        verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         items(wifiNetwork) { wifiModel ->
-
             itemWifi(navHost, ssid, wifiViewModel, wifiModel, frequency)
         }
 
+
     }
+
+
 }
 
 
@@ -209,9 +192,6 @@ fun itemWifi(
     ssid: String, wifiViewModel: WifiViewModel, wifiModel: ScanResult, frequency: Double?
 ) {
     Card(
-        Modifier
-            .fillMaxWidth()
-            .padding(10.dp),
         colors = CardDefaults.cardColors(AppColor.button),
         elevation = CardDefaults.cardElevation(5.dp)
     ) {
@@ -228,7 +208,8 @@ fun itemWifi(
                 Modifier.weight(0.5f)
             )
             WifiName(
-                Modifier.weight(5f), wifiModel
+                Modifier.weight(5f),
+                wifiModel
             )
             ArrowBackIcon(
                 Modifier.weight(1f), navHost, ssid, wifiViewModel, wifiModel
@@ -246,7 +227,8 @@ fun ArrowBackIcon(
     wifiViewModel: WifiViewModel,
     wifiModel: ScanResult,
 
-) {
+
+    ) {
 
     var dialogState by remember {
         mutableStateOf(false)
@@ -420,8 +402,10 @@ fun IconWifi(modifier: Modifier, frequency: Double?, wifiModel: ScanResult) {
             }
         }
 
+
+
         Icon(
-            painter = painterResource(id = icon),
+            painter = painterResource(id = R.drawable.freqbaja),
             contentDescription = "Wifi",
             modifier = modifier
                 .size(35.dp),
@@ -433,30 +417,23 @@ fun IconWifi(modifier: Modifier, frequency: Double?, wifiModel: ScanResult) {
 
 @Composable
 fun NetworkView(modifier: Modifier) {
-    Box(
-        modifier = modifier,
-    ) {
-        Text(
-            text = "Networks",
-            fontSize = 18.sp,
-            color = AppColor.letter,
-            modifier = Modifier.padding(end = 5.dp)
-        )
 
-    }
-
+    Text(
+        text = "Networks",
+        fontSize = 18.sp,
+        color = AppColor.letter, modifier = modifier.padding(5.dp)
+    )
 }
 
 @Composable
 fun SwitchScanning(
-    modifier: Modifier,
     scannerState: Boolean,
     wifiManaguer: WifiManager,
     wifiViewModel: WifiViewModel,
     onValueChanged: (Boolean) -> Unit
 ) {
     Card(
-        modifier = modifier
+        modifier = Modifier
             .padding(10.dp),
         elevation = CardDefaults.elevatedCardElevation(5.dp),
         border = BorderStroke(
@@ -528,7 +505,7 @@ fun sppedLottie(scannerState: Boolean): Float {
 }
 
 @Composable
-fun LottieSeeker(modifier: Modifier, scannerState: Boolean) {
+fun LottieSeeker(scannerState: Boolean) {
 
     // composition carga la descripción de la animación desde el archivo JSON.
     val composition by rememberLottieComposition(spec = LottieCompositionSpec.RawRes(R.raw.wifi_loading))
@@ -544,7 +521,7 @@ fun LottieSeeker(modifier: Modifier, scannerState: Boolean) {
     LottieAnimation(
         composition = composition,
         progress = preloaderProgress,
-        modifier = modifier.size(230.dp)
+        modifier = Modifier.size(230.dp)
     )
 }
 

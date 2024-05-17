@@ -1,6 +1,7 @@
 package com.example.wifitracker
 
 
+import android.content.Context
 import android.net.wifi.WifiManager
 import android.os.Build
 import android.os.Bundle
@@ -26,6 +27,8 @@ class MainActivity : ComponentActivity() {
 
     private val wifiViewModel: WifiViewModel by viewModels()
     private val wifiManaguer by lazy { applicationContext.getSystemService(WIFI_SERVICE) as WifiManager }
+
+
 
     @RequiresApi(Build.VERSION_CODES.R)
     override fun onCreate(savedInstanceState: Bundle?) {
